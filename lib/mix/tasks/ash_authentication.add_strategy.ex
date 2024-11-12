@@ -315,13 +315,7 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
 
   defp create_new_magic_link_sender(igniter, sender, options) do
     with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
-      web_module = Igniter.Libs.Phoenix.web_module(igniter)
-      {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
-
-      use_web_module =
-        if web_module_exists? do
-          "use #{inspect(web_module)}, :verified_routes"
-        end
+      {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
       Igniter.Project.Module.create_module(
         igniter,
@@ -353,7 +347,7 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
           new()
           |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
           |> to(to_string(email))
-          |> subject("Your login link")
+          |> subject("Your login kink")
           |> html_body(body([token: token, email: email]))
           |> #{List.last(Module.split(mailer))}.deliver!()
         end
@@ -374,15 +368,9 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_example_new_magic_link_sender(igniter, sender, options) do
-    web_module = Igniter.Libs.Phoenix.web_module(igniter)
-    {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
+    {web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
-    use_web_module =
-      if web_module_exists? do
-        "use #{inspect(web_module)}, :verified_routes"
-      end
-
-    example_domain = options[:user] |> Module.split() |> :lists.droplast() |> Module.concat()
+    example_domain = example_domain(options[:user])
 
     real_example =
       if web_module_exists? do
@@ -430,13 +418,7 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
 
   defp create_reset_sender(igniter, sender, options) do
     with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
-      web_module = Igniter.Libs.Phoenix.web_module(igniter)
-      {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
-
-      use_web_module =
-        if web_module_exists? do
-          "use #{inspect(web_module)}, :verified_routes"
-        end
+      {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
       Igniter.Project.Module.create_module(
         igniter,
@@ -479,15 +461,9 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_example_reset_sender(igniter, sender, options) do
-    web_module = Igniter.Libs.Phoenix.web_module(igniter)
-    {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
+    {web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
-    use_web_module =
-      if web_module_exists? do
-        "use #{inspect(web_module)}, :verified_routes"
-      end
-
-    example_domain = options[:user] |> Module.split() |> :lists.droplast() |> Module.concat()
+    example_domain = example_domain(options[:user])
 
     real_example =
       if web_module_exists? do
@@ -526,13 +502,7 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
 
   defp create_new_user_confirmation_sender(igniter, sender, options) do
     with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
-      web_module = Igniter.Libs.Phoenix.web_module(igniter)
-      {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
-
-      use_web_module =
-        if web_module_exists? do
-          "use #{inspect(web_module)}, :verified_routes"
-        end
+      {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
       Igniter.Project.Module.create_module(
         igniter,
@@ -575,13 +545,7 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_example_new_user_confirmation_sender(igniter, sender, options) do
-    web_module = Igniter.Libs.Phoenix.web_module(igniter)
-    {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
-
-    use_web_module =
-      if web_module_exists? do
-        "use #{inspect(web_module)}, :verified_routes"
-      end
+    {web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
     example_domain = options[:user] |> Module.split() |> :lists.droplast() |> Module.concat()
 
@@ -618,6 +582,22 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
       end
       '''
     )
+  end
+
+  defp create_use_web_module(igniter) do
+    web_module = Igniter.Libs.Phoenix.web_module(igniter)
+    {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
+
+    use_web_module =
+      if web_module_exists? do
+        "use #{inspect(web_module)}, :verified_routes"
+      end
+
+    {web_module_exists?, use_web_module, igniter}
+  end
+
+  defp example_domain(user) do
+    user |> Module.split() |> :lists.droplast() |> Module.concat()
   end
 
   defp generate_sign_in_and_registration(igniter, options) do
