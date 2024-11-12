@@ -314,54 +314,55 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_new_magic_link_sender(igniter, sender, options) do
-    with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
-      {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
+    case Igniter.Libs.Swoosh.list_mailers(igniter) do
+      {igniter, [mailer]} ->
+        {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
-      Igniter.Project.Module.create_module(
-        igniter,
-        sender,
-        ~s'''
-        @moduledoc """
-        Sends a magic link email
-        """
+        Igniter.Project.Module.create_module(
+          igniter,
+          sender,
+          ~s'''
+          @moduledoc """
+          Sends a magic link email
+          """
 
-        use AshAuthentication.Sender
-        #{use_web_module}
+          use AshAuthentication.Sender
+          #{use_web_module}
 
-        import Swoosh.Email
+          import Swoosh.Email
 
-        alias #{inspect(mailer)}
+          alias #{inspect(mailer)}
 
 
-        @impl true
-        def send(user_or_email, token, _) do
-        # if you get a user, its for a user that already exists
-        # if you get an email, the user does not exist yet
+          @impl true
+          def send(user_or_email, token, _) do
+          # if you get a user, its for a user that already exists
+          # if you get an email, the user does not exist yet
 
-        email =
-          case user_or_email do
-            %{email: email} -> email
-            email -> email
+          email =
+            case user_or_email do
+              %{email: email} -> email
+              email -> email
+            end
+
+            new()
+            |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
+            |> to(to_string(email))
+            |> subject("Your login kink")
+            |> html_body(body([token: token, email: email]))
+            |> #{List.last(Module.split(mailer))}.deliver!()
           end
 
-          new()
-          |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
-          |> to(to_string(email))
-          |> subject("Your login kink")
-          |> html_body(body([token: token, email: email]))
-          |> #{List.last(Module.split(mailer))}.deliver!()
-        end
+          defp body(params) do
+            """
+            Hello, \#{params[:email]}! Click this link to sign in:
 
-        defp body(params) do
-          """
-          Hello, \#{params[:email]}! Click this link to sign in:
+            \#{url(~p"/auth/user/magic_link/?token=\#{params[:token]}")}
+            """
+          end
+          '''
+        )
 
-          \#{url(~p"/auth/user/magic_link/?token=\#{params[:token]}")}
-          """
-        end
-        '''
-      )
-    else
       _ ->
         create_example_new_magic_link_sender(igniter, sender, options)
     end
@@ -417,44 +418,45 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_reset_sender(igniter, sender, options) do
-    with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
-      {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
+    case Igniter.Libs.Swoosh.list_mailers(igniter) do
+      {igniter, [mailer]} ->
+        {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
-      Igniter.Project.Module.create_module(
-        igniter,
-        sender,
-        ~s'''
-        @moduledoc """
-        Sends a password reset email
-        """
-
-        use AshAuthentication.Sender
-        #{use_web_module}
-
-        import Swoosh.Email
-
-        alias #{inspect(mailer)}
-
-        @impl true
-        def send(user, token, _) do
-          new()
-          |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
-          |> to(to_string(user.email))
-          |> subject("Reset your password")
-          |> html_body(body([token: token]))
-          |> #{List.last(Module.split(mailer))}.deliver!()
-        end
-
-        defp body(params) do
+        Igniter.Project.Module.create_module(
+          igniter,
+          sender,
+          ~s'''
+          @moduledoc """
+          Sends a password reset email
           """
-          Click this link to reset your password:
 
-          \#{url(~p"/password-reset/\#{params[:token]}")}
-          """
-        end
-        '''
-      )
-    else
+          use AshAuthentication.Sender
+          #{use_web_module}
+
+          import Swoosh.Email
+
+          alias #{inspect(mailer)}
+
+          @impl true
+          def send(user, token, _) do
+            new()
+            |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
+            |> to(to_string(user.email))
+            |> subject("Reset your password")
+            |> html_body(body([token: token]))
+            |> #{List.last(Module.split(mailer))}.deliver!()
+          end
+
+          defp body(params) do
+            """
+            Click this link to reset your password:
+
+            \#{url(~p"/password-reset/\#{params[:token]}")}
+            """
+          end
+          '''
+        )
+
       _ ->
         create_example_reset_sender(igniter, sender, options)
     end
@@ -501,44 +503,45 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_new_user_confirmation_sender(igniter, sender, options) do
-    with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
-      {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
+    case Igniter.Libs.Swoosh.list_mailers(igniter) do
+      {igniter, [mailer]} ->
+        {_web_module_exists?, use_web_module, igniter} = create_use_web_module(igniter)
 
-      Igniter.Project.Module.create_module(
-        igniter,
-        sender,
-        ~s'''
-        @moduledoc """
-        Sends an email for a new user to confirm their email address.
-        """
-
-        use AshAuthentication.Sender
-        #{use_web_module}
-
-        import Swoosh.Email
-
-        alias #{inspect(mailer)}
-
-        @impl true
-        def send(user, token, _) do
-          new()
-          |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
-          |> to(to_string(user.email))
-          |> subject("Confirm your email address")
-          |> html_body(body([token: token]))
-          |> #{List.last(Module.split(mailer))}.deliver!()
-        end
-
-        defp body(params) do
+        Igniter.Project.Module.create_module(
+          igniter,
+          sender,
+          ~s'''
+          @moduledoc """
+          Sends an email for a new user to confirm their email address.
           """
-          Click this link to confirm your email:
 
-          \#{url(~p"/auth/user/confirm_new_user?\#{[confirm: params[:token]]}")}
-          """
-        end
-        '''
-      )
-    else
+          use AshAuthentication.Sender
+          #{use_web_module}
+
+          import Swoosh.Email
+
+          alias #{inspect(mailer)}
+
+          @impl true
+          def send(user, token, _) do
+            new()
+            |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
+            |> to(to_string(user.email))
+            |> subject("Confirm your email address")
+            |> html_body(body([token: token]))
+            |> #{List.last(Module.split(mailer))}.deliver!()
+          end
+
+          defp body(params) do
+            """
+            Click this link to confirm your email:
+
+            \#{url(~p"/auth/user/confirm_new_user?\#{[confirm: params[:token]]}")}
+            """
+          end
+          '''
+        )
+
       _ ->
         create_example_new_user_confirmation_sender(igniter, sender, options)
     end
