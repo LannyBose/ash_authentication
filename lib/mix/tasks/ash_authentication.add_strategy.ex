@@ -314,6 +314,10 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_new_magic_link_sender(igniter, sender, options) do
+    create_example_new_magic_link_sender(igniter, sender, options)
+  end
+
+  defp create_example_new_magic_link_sender(igniter, sender, options) do
     web_module = Igniter.Libs.Phoenix.web_module(igniter)
     {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
 
@@ -369,6 +373,10 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_reset_sender(igniter, sender, options) do
+    create_example_reset_sender(igniter, sender, options)
+  end
+
+  defp create_example_reset_sender(igniter, sender, options) do
     web_module = Igniter.Libs.Phoenix.web_module(igniter)
     {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
 
@@ -415,6 +423,58 @@ defmodule Mix.Tasks.AshAuthentication.AddStrategy do
   end
 
   defp create_new_user_confirmation_sender(igniter, sender, options) do
+    with {igniter, [mailer]} <- Igniter.Libs.Swoosh.list_mailers(igniter) do
+      dbg(mailer)
+
+      web_module = Igniter.Libs.Phoenix.web_module(igniter)
+      {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
+
+      use_web_module =
+        if web_module_exists? do
+          "use #{inspect(web_module)}, :verified_routes"
+        end
+
+      Igniter.Project.Module.create_module(
+        igniter,
+        sender,
+        ~s'''
+        @moduledoc """
+        Sends an email for a new user to confirm their email address.
+        """
+
+        use AshAuthentication.Sender
+        #{use_web_module}
+
+        import Swoosh.Email
+
+        alias #{inspect(mailer)}
+
+        @impl true
+        def send(user, token, _) do
+          new()
+          |> from({"noreply", "noreply@example.com"}) # TODO: Replace with your email
+          |> to(to_string(user.email))
+          |> subject("Confirm your email address")
+          |> html_body(body([token: token]))
+          |> #{List.last(Module.split(mailer))}.deliver!()
+        end
+
+        defp body(params) do
+          """
+          Click this link to confirm your email:
+
+          \#{url(~p"/auth/user/confirm_new_user?\#{[confirm: params[:token]]}")}
+          """
+        end
+        '''
+      )
+    else
+      _ ->
+        create_example_new_user_confirmation_sender(igniter, sender, options)
+    end
+  end
+
+  defp create_example_new_user_confirmation_sender(igniter, sender, options) do
     web_module = Igniter.Libs.Phoenix.web_module(igniter)
     {web_module_exists?, igniter} = Igniter.Project.Module.module_exists(igniter, web_module)
 

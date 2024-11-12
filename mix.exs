@@ -187,8 +187,9 @@ defmodule AshAuthentication.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ash, ash_version("~> 3.0 and >= 3.4.29")},
-      {:igniter, "~> 0.4"},
+      {:igniter, path: "../igniter", override: true},
       {:assent, "~> 0.2 and >= 0.2.8"},
       {:bcrypt_elixir, "~> 3.0"},
       {:castore, "~> 1.0"},
